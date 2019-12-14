@@ -60,7 +60,7 @@ def load_dataset(csv_path, label_col='y', add_intercept=False):
     return inputs, labels
 
 
-def plot(x, y, theta, save_path, correction=1.0):
+def plot(x, y, z, save_path):
     """Plot dataset and fitted logistic regression parameters.
 
     Args:
@@ -72,20 +72,22 @@ def plot(x, y, theta, save_path, correction=1.0):
     """
     # Plot dataset
     plt.figure()
-    plt.plot(x,y,z,save_path)
 
-    
-    plt.plot(x[y == 0, -2], x[y == 0, -1], 'go', linewidth=2)
-
-    # Plot decision boundary (found by solving for theta^T x = 0)
-    x1 = np.arange(min(x[:, -2]), max(x[:, -2]), 0.01)
-    x2 = -(theta[0] / theta[2] + theta[1] / theta[2] * x1
-           + np.log((2 - correction) / correction) / theta[2])
-    plt.plot(x1, x2, c='red', linewidth=2)
-    plt.xlim(x[:, -2].min()-.1, x[:, -2].max()+.1)
-    plt.ylim(x[:, -1].min()-.1, x[:, -1].max()+.1)
+    plt.plot(x[:,0], x[:,1], c='red', linewidth=2)
+    plt.plot(y[:, 0], y[:,1], c='yellow', linewidth=2)
+    plt.plot(z[:, 0], z[:,1], c='green', linewidth=2)
 
     # Add labels and save to disk
-    plt.xlabel('x1')
-    plt.ylabel('x2')
-    plt.savefig(save_path)
+    plt.xlabel('learning_rate')
+    plt.ylabel('iteration')
+    plt.savefig(save_path+'_conv.png')
+
+    plot.clear()
+
+    plt.plot(x[:, 0], x[:, 2], c='red', linewidth=2)
+    plt.plot(y[:, 0], y[:, 2], c='yellow', linewidth=2)
+    plt.plot(z[:, 0], z[:, 2], c='green', linewidth=2)
+
+    plt.xlabel('learning_rate')
+    plt.ylabel('accuracy')
+    plt.savefig(save_path+'_ac.png')

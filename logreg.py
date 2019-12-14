@@ -7,23 +7,23 @@ import multiprocessing
 
 def main():
     # Number of trials to run in experiment
-    rates=[0.001,0.005,0.01,0.05,0.1,0.5,1]
-    x = np.zeros((7,2))
-    y = np.zeros((7, 2))
-    z = np.zeros((7, 2))
+    rates = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+    x = np.zeros((7,3))
+    y = np.zeros((7,3))
+    z = np.zeros((7,3))
 
     # Run each trial on a different processor
     with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
-        for lr,it,ac in pool.imap_unordered(run_trial_plms, rates):
-            x[lr,:] = [it,ac]
-        for lr,it,ac in pool.imap_unordered(run_trial_lms, rates):
-            y[lr,:] = [it,ac]
-        for lr,it,ac in pool.imap_unordered(run_trial_newton, rates):
-            z[lr,:] = [it,ac]
+        for n,it,ac in pool.imap_unordered(run_trial_plms, range(7)):
+            x[n,:] = [rates[n],it,ac]
+        for n,it,ac in pool.imap_unordered(run_trial_lms, range(7)):
+            y[n,:] = [rates[n],it,ac]
+        for n,it,ac in pool.imap_unordered(run_trial_newton, range(7)):
+            z[n,:] = [rates[n],it,ac]
 
-    util.plot_points(x[:, :, 0], x[:, :, 1], 'Rates.png')
+    util.plot(x,y,z,'Classification')
 
-def run_trial_plms(lr):
+def run_trial_plms(n):
     """Problem: Logistic regression with Newton's Method.
 
         Args:
@@ -31,6 +31,7 @@ def run_trial_plms(lr):
             valid_path: Path to CSV file containing dataset for validation.
             save_path: Path to save predicted probabilities using np.savetxt().
         """
+    rates = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
     train_path = 'ds1_train.csv'
     valid_path = 'ds1_valid.csv'
 
@@ -39,16 +40,16 @@ def run_trial_plms(lr):
     # *** START CODE HERE ***
 
     # Train a logistic regression classifier
-    LR = LogisticRegression()
+    LR = LogisticRegression(step_size = rates[n])
     it = LR.plms_fit(x_train, y_train)
 
     # Plot decision boundary on top of validation set set
     x_valid, y_valid = util.load_dataset(valid_path, add_intercept=True)
     ac = LR.predict(x_valid, y_valid)
-    return lr,it,ac
+    return n,it,ac
     # *** END CODE HERE ***
 
-def run_trial_lms(lr):
+def run_trial_lms(n):
     """Problem: Logistic regression with Newton's Method.
 
         Args:
@@ -56,6 +57,8 @@ def run_trial_lms(lr):
             valid_path: Path to CSV file containing dataset for validation.
             save_path: Path to save predicted probabilities using np.savetxt().
         """
+    rates = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+
     train_path = 'ds1_train.csv'
     valid_path = 'ds1_valid.csv'
 
@@ -64,16 +67,16 @@ def run_trial_lms(lr):
     # *** START CODE HERE ***
 
     # Train a logistic regression classifier
-    LR = LogisticRegression()
+    LR = LogisticRegression(step_size = rates[n])
     it = LR.lms_fit(x_train, y_train)
 
     # Plot decision boundary on top of validation set set
     x_valid, y_valid = util.load_dataset(valid_path, add_intercept=True)
     ac = LR.predict(x_valid, y_valid)
-    return lr,it,ac
+    return n,it,ac
     # *** END CODE HERE ***
 
-def run_trial_newton(lr):
+def run_trial_newton(n):
     """Problem: Logistic regression with Newton's Method.
 
         Args:
@@ -81,6 +84,7 @@ def run_trial_newton(lr):
             valid_path: Path to CSV file containing dataset for validation.
             save_path: Path to save predicted probabilities using np.savetxt().
         """
+    rates = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
     train_path = 'ds1_train.csv'
     valid_path = 'ds1_valid.csv'
 
@@ -89,7 +93,7 @@ def run_trial_newton(lr):
     # *** START CODE HERE ***
 
     # Train a logistic regression classifier
-    LR = LogisticRegression()
+    LR = LogisticRegression(step_size = rates[n])
     it = LR.newton_fit(x_train, y_train)
     print(it)
 
@@ -97,7 +101,7 @@ def run_trial_newton(lr):
     x_valid, y_valid = util.load_dataset(valid_path, add_intercept=True)
     ac = LR.predict(x_valid, y_valid)
     print(ac)
-    return lr,it,ac
+    return n,it,ac
     # *** END CODE HERE ***
 
 class LogisticRegression:
