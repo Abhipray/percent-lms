@@ -5,7 +5,25 @@ import math
 from random import *
 import multiprocessing
 
-def run_trial(step_size):
+def main():
+    # Number of trials to run in experiment
+    rates=[0.001,0.005,0.01,0.05,0.1,0.5,1]
+    x = np.zeros((7,2))
+    y = np.zeros((7, 2))
+    z = np.zeros((7, 2))
+
+    # Run each trial on a different processor
+    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+        for lr,it,ac in pool.imap_unordered(run_trial_plms, rates):
+            x[lr,:] = [it,ac]
+        for lr,it,ac in pool.imap_unordered(run_trial_lms, rates):
+            y[lr,:] = [it,ac]
+        for lr,it,ac in pool.imap_unordered(run_trial_newton, rates):
+            z[lr,:] = [it,ac]
+
+    util.plot_points(x[:, :, 0], x[:, :, 1], 'Rates.png')
+
+def run_trial_plms(lr):
     """Problem: Logistic regression with Newton's Method.
 
         Args:
@@ -13,8 +31,8 @@ def run_trial(step_size):
             valid_path: Path to CSV file containing dataset for validation.
             save_path: Path to save predicted probabilities using np.savetxt().
         """
-    train_path = 'ds1_train.csv',
-    valid_path = 'ds1_valid.csv',
+    train_path = 'ds1_train.csv'
+    valid_path = 'ds1_valid.csv'
 
     x_train, y_train = util.load_dataset(train_path, add_intercept=True)
 
@@ -26,19 +44,61 @@ def run_trial(step_size):
 
     # Plot decision boundary on top of validation set set
     x_valid, y_valid = util.load_dataset(valid_path, add_intercept=True)
-    ac = LR.predict(x_valid, y_valid)[1]
-    return(step_size,it,ac)
+    ac = LR.predict(x_valid, y_valid)
+    return lr,it,ac
     # *** END CODE HERE ***
 
-def main():
-    # Number of trials to run in experiment
-    rates=[0.001,0.005,0.01,0.05,0.1]
-    x = np.zeros((5,2))
+def run_trial_lms(lr):
+    """Problem: Logistic regression with Newton's Method.
 
-    # Run each trial on a different processor
-    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
-        for lr,it,ac in pool.imap_unordered(run_trial, rates):
-            x[lr] = [it,ac]
+        Args:
+            train_path: Path to CSV file containing dataset for training.
+            valid_path: Path to CSV file containing dataset for validation.
+            save_path: Path to save predicted probabilities using np.savetxt().
+        """
+    train_path = 'ds1_train.csv'
+    valid_path = 'ds1_valid.csv'
+
+    x_train, y_train = util.load_dataset(train_path, add_intercept=True)
+
+    # *** START CODE HERE ***
+
+    # Train a logistic regression classifier
+    LR = LogisticRegression()
+    it = LR.lms_fit(x_train, y_train)
+
+    # Plot decision boundary on top of validation set set
+    x_valid, y_valid = util.load_dataset(valid_path, add_intercept=True)
+    ac = LR.predict(x_valid, y_valid)
+    return lr,it,ac
+    # *** END CODE HERE ***
+
+def run_trial_newton(lr):
+    """Problem: Logistic regression with Newton's Method.
+
+        Args:
+            train_path: Path to CSV file containing dataset for training.
+            valid_path: Path to CSV file containing dataset for validation.
+            save_path: Path to save predicted probabilities using np.savetxt().
+        """
+    train_path = 'ds1_train.csv'
+    valid_path = 'ds1_valid.csv'
+
+    x_train, y_train = util.load_dataset(train_path, add_intercept=True)
+
+    # *** START CODE HERE ***
+
+    # Train a logistic regression classifier
+    LR = LogisticRegression()
+    it = LR.newton_fit(x_train, y_train)
+    print(it)
+
+    # Plot decision boundary on top of validation set set
+    x_valid, y_valid = util.load_dataset(valid_path, add_intercept=True)
+    ac = LR.predict(x_valid, y_valid)
+    print(ac)
+    return lr,it,ac
+    # *** END CODE HERE ***
 
 class LogisticRegression:
     """Logistic regression with Newton's Method as the solver.
@@ -94,11 +154,38 @@ class LogisticRegression:
             update = (delta * np.sign(old_theta)) * old_theta + noise
             self.theta = old_theta - update
             t+=1
-            print(self.theta)
-            print(np.linalg.norm(delta))
-            if t%1000==0:
-                print(t)
-        return(t)
+        return t
+        # *** END CODE HERE ***
+
+    def lms_fit(self, x, y):
+        """Run Newton's Method to minimize J(theta) for logistic regression.
+
+        Args:
+            x: Training example inputs. Shape (n_examples, dim).
+            y: Training example labels. Shape (n_examples,).
+        """
+        # *** START CODE HERE ***
+        def logisticGradient(w,x,y):
+            g1=np.array([0.0 for k in range(len(w))])
+            g=np.reshape(g1, (len(g1), 1))
+            for k in range(len(y)):
+                x_k_new = np.reshape(x[k], (len(x[k]), 1))
+                g+=(-1/len(y))*(y[k]-1/(1+np.exp(-np.dot(np.transpose(w),x_k_new))))*x_k_new
+            return g
+
+        delta=1e4
+        t=0
+        if self.theta==None:
+            self.theta=np.ones_like(x[0,:])
+        self.theta=np.reshape(self.theta,(len(self.theta),1))
+        while (np.linalg.norm(delta)>self.eps and t<self.max_iter):
+            old_theta = self.theta
+            grad=logisticGradient(old_theta, x, y)
+            delta = self.step_size * grad
+            update = delta * old_theta
+            self.theta = old_theta - update
+            t+=1
+        return t
         # *** END CODE HERE ***
 
     def newton_fit(self, x, y):
@@ -134,10 +221,7 @@ class LogisticRegression:
             self.theta=old_theta-self.step_size*np.dot(np.linalg.inv(logisticHessian(old_theta,x,y)),logisticGradient(old_theta,x,y))
             delta=np.sum(np.abs(self.theta - old_theta))
             t+=1
-            if t % 1000 == 0:
-                print(t)
-        print(t)
-        print(self.theta)
+        return t
         # *** END CODE HERE ***
 
     def predict(self, x, y):
@@ -162,8 +246,7 @@ class LogisticRegression:
             elif np.dot(np.transpose(self.theta),new_x_k)<0:
                 if y[k]==1.0:
                     FN+=1
-        print(FP,FN,(FP+FN)/len(y),1-(FP+FN)/len(y))
-        return results
+        return (FP+FN)/len(y)
         # *** END CODE HERE ***
 
 if __name__ == '__main__':
