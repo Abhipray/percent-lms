@@ -7,7 +7,7 @@ import multiprocessing
 
 def main():
     # Number of trials to run in experiment
-    rates = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+    rates = [0.005, 0.01, 0.05, 0.1, 0.5, 1,5]
     x = np.zeros((7,3))
     y = np.zeros((7,3))
     z = np.zeros((7,3))
@@ -31,7 +31,7 @@ def run_trial_plms(n):
             valid_path: Path to CSV file containing dataset for validation.
             save_path: Path to save predicted probabilities using np.savetxt().
         """
-    rates = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+    rates = [0.005, 0.01, 0.05, 0.1, 0.5, 1,5]
     train_path = 'ds1_train.csv'
     valid_path = 'ds1_valid.csv'
 
@@ -57,7 +57,7 @@ def run_trial_lms(n):
             valid_path: Path to CSV file containing dataset for validation.
             save_path: Path to save predicted probabilities using np.savetxt().
         """
-    rates = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+    rates = [0.005, 0.01, 0.05, 0.1, 0.5, 1,5]
 
     train_path = 'ds1_train.csv'
     valid_path = 'ds1_valid.csv'
@@ -112,7 +112,7 @@ class LogisticRegression:
         > clf.fit(x_train, y_train)
         > clf.predict(x_eval)
     """
-    def __init__(self, step_size=0.01, max_iter=100000, eps=1e-5,
+    def __init__(self, step_size=0.01, max_iter=10000, eps=1e-5,
                  theta_0=None, verbose=True):
         """
         Args:
