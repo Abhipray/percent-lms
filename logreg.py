@@ -3,30 +3,42 @@ import util
 import matplotlib.pyplot as plt
 import math
 from random import *
+import multiprocessing
 
-def main(train_path, valid_path, save_path,image_path):
+def run_trial(step_size):
     """Problem: Logistic regression with Newton's Method.
 
-    Args:
-        train_path: Path to CSV file containing dataset for training.
-        valid_path: Path to CSV file containing dataset for validation.
-        save_path: Path to save predicted probabilities using np.savetxt().
-    """
+        Args:
+            train_path: Path to CSV file containing dataset for training.
+            valid_path: Path to CSV file containing dataset for validation.
+            save_path: Path to save predicted probabilities using np.savetxt().
+        """
+    train_path = 'ds1_train.csv',
+    valid_path = 'ds1_valid.csv',
+
     x_train, y_train = util.load_dataset(train_path, add_intercept=True)
 
     # *** START CODE HERE ***
 
     # Train a logistic regression classifier
     LR = LogisticRegression()
-    LR.plms_fit(x_train, y_train)
+    it = LR.plms_fit(x_train, y_train)
 
     # Plot decision boundary on top of validation set set
     x_valid, y_valid = util.load_dataset(valid_path, add_intercept=True)
-    util.plot(x_valid, y_valid, LR.theta, image_path, correction=1.0)
-    # Use np.savetxt to save predictions on eval set to save_path
-    np.savetxt(save_path,LR.predict(x_valid,y_valid))
+    ac = LR.predict(x_valid, y_valid)[1]
+    return(step_size,it,ac)
     # *** END CODE HERE ***
 
+def main():
+    # Number of trials to run in experiment
+    rates=[0.001,0.005,0.01,0.05,0.1]
+    x = np.zeros((5,2))
+
+    # Run each trial on a different processor
+    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+        for lr,it,ac in pool.imap_unordered(run_trial, rates):
+            x[lr] = [it,ac]
 
 class LogisticRegression:
     """Logistic regression with Newton's Method as the solver.
@@ -79,15 +91,14 @@ class LogisticRegression:
             delta = self.step_size * grad
             var = abs(np.linalg.norm(delta, axis=0)) / delta.shape[0]
             noise = np.where(abs(old_theta) < var, np.random.normal(0, var, delta.shape), np.zeros_like(delta))
-            update = (delta * np.sign(old_theta)+noise) * old_theta
+            update = (delta * np.sign(old_theta)) * old_theta + noise
             self.theta = old_theta - update
             t+=1
             print(self.theta)
+            print(np.linalg.norm(delta))
             if t%1000==0:
                 print(t)
-        print(t)
-        print(self.theta)
-        print(np.min(np.abs(self.theta)))
+        return(t)
         # *** END CODE HERE ***
 
     def newton_fit(self, x, y):
@@ -156,10 +167,7 @@ class LogisticRegression:
         # *** END CODE HERE ***
 
 if __name__ == '__main__':
-    main(train_path='ds1_train.csv',
-         valid_path='ds1_valid.csv',
-         save_path='logreg_pred_0001.txt',
-         image_path='logreg01.png')
+    main()
 
     #main(train_path='ds2_train.csv',
     #     valid_path='ds2_valid.csv',
