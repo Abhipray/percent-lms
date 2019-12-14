@@ -1,5 +1,5 @@
 import numpy as np
-import util
+import p_util as util
 import matplotlib.pyplot as plt
 import multiprocessing
 import time
@@ -58,6 +58,7 @@ def main():
     # Number of trials to run in experiment
     n = 8
     x = np.zeros((5,n,2))
+    #x = np.load('vardata_15.npy')
 
     # Run each trial on a different processor
     with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
