@@ -73,21 +73,25 @@ def plot(x, y, z, save_path):
     # Plot dataset
     plt.figure()
 
-    plt.plot(x[:,0], x[:,1], c='red', linewidth=2)
-    plt.plot(y[:, 0], y[:,1], c='yellow', linewidth=2)
-    plt.plot(z[:, 0], z[:,1], c='green', linewidth=2)
+    plt.plot(x[:, 0], x[:,1], c='red', linewidth=2, label='%LMS')
+    plt.plot(y[:, 0], y[:,1], c='blue', linewidth=2, label='LMS')
+    plt.plot(z[:, 0], z[:,1], c='green', linewidth=2, label='Newton')
 
     # Add labels and save to disk
+    plt.legend()
+    plt.xscale('log')
     plt.xlabel('learning_rate')
     plt.ylabel('iteration')
     plt.savefig(save_path+'_conv.png')
 
-    plot.clear()
+    plt.clf()
 
-    plt.plot(x[:, 0], x[:, 2], c='red', linewidth=2)
-    plt.plot(y[:, 0], y[:, 2], c='yellow', linewidth=2)
-    plt.plot(z[:, 0], z[:, 2], c='green', linewidth=2)
-
+    plt.plot(x[:, 0], 1-x[:, 2], c='red', linewidth=2, label='%LMS')
+    plt.plot(y[:, 0], 1-y[:, 2], c='blue', linewidth=2, label='LMS')
+    plt.plot(z[:, 0], 1-z[:, 2], c='green', linewidth=2, label='Newton')
+    
+    plt.legend()
+    plt.xscale('log')
     plt.xlabel('learning_rate')
     plt.ylabel('accuracy')
     plt.savefig(save_path+'_ac.png')

@@ -232,7 +232,7 @@ def gradient_descent_epoch(train_data, train_labels, learning_rate, batch_size, 
                 delta = learning_rate * grads[k]            
                 var = abs(np.linalg.norm(delta, axis=0)) / delta.shape[0]
                 noise = np.where(abs(params[k]) < var, np.random.normal(0, var, delta.shape), np.zeros_like(delta))
-                update = (delta * np.sign(params[k]) + noise) * params[k]
+                update = (delta * np.sign(params[k]) * params[k]) + noise
             else:
                 update = learning_rate * grads[k]
             params[k] -= update
@@ -267,7 +267,7 @@ def nn_train(
         h, output, dev_cost = forward_prop_func(dev_data, dev_labels, params)
         cost_dev.append(dev_cost)
         accuracy_dev.append(compute_accuracy(output, dev_labels))
-        print(epoch, '/', num_epochs, 'train loss: ', train_cost, 'dev loss: ', dev_cost)
+        print(('%LMS, LR=' if percent else 'LMS, LR='), '{:.2f}'.format(learning_rate), ':', epoch+1, '/', num_epochs, 'train loss: ', train_cost, 'dev loss: ', dev_cost)
 
     return params, cost_train, cost_dev, accuracy_train, accuracy_dev
 
@@ -291,7 +291,7 @@ def read_data(images_file, labels_file):
     y = np.loadtxt(labels_file, delimiter=',')
     return x, y
 
-def run_train_test(name, all_data, all_labels, backward_prop_func, num_epochs, plot=False, percent=False, learning_rate=0.1):
+def run_train_test(learning_rate, name, all_data, all_labels, backward_prop_func, num_epochs, plot=False, percent=False):
     if name == 'LMS':
         percent = False
     elif name == '%LMS':
