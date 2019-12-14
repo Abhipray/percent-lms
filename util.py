@@ -60,57 +60,30 @@ def load_dataset(csv_path, label_col='y', add_intercept=False):
     return inputs, labels
 
 
-def plot_points(x,y,save_path):
-    quantiles = [.25,.5,.75]
-    quants = np.zeros((5,2,3))
-    mean = np.zeros((5,2))
-    for i in range(5):
-        z = np.nonzero(y[i,:])
-        quants[i,:,:] = [np.quantile(x[i,z], quantiles), np.quantile(y[i,z], quantiles)]
-        mean[i,:] = [np.average(x[i,z]), np.average(y[i,z])]
-    colors = ['ko', 'ro', 'bo', 'co', 'go']
-    colors_quant = [['kv', 'k>', 'k^'], ['rv', 'r>', 'r^'], ['bv', 'b>', 'b^'], ['cv', 'c>', 'c^'], ['gv', 'g>', 'g^']]
-    colors_avg = ['kx', 'rx', 'bx', 'cx', 'gx']
-    labels = ['lms', '%grad', '%1e-3', '%1e-4', '%1e-5']
-    style = ['full', 'left', 'bottom', 'right', 'top']
-    plt.figure()
-    #for i in range(5):
-        #plot dataset
-        #plt.plot(x[i], y[i], colors[i], label=labels[i], fillstyle=style[i], mew=0)
-    for i in range(5):
-        #plot averages
-        for j in range(3):
-            plt.plot(quants[i,0,j], quants[i,1,j], colors_quant[i][j])
-        plt.plot(mean[i,0], mean[i,1], colors_avg[i], label=labels[i])
-
-    # Add labels and save to disk
-    plt.legend()
-    plt.xlabel('loss deviation')
-    plt.ylabel('iterations')
-    plt.xlim(-.01,0.5)
-    plt.savefig(save_path)
-
-
-def plot(t, p, save_path, correction=1.0):
-    """Plot predicted counts against true counts.
+def plot(x, y, theta, save_path, correction=1.0):
+    """Plot dataset and fitted logistic regression parameters.
 
     Args:
-        t: Vector of true counts (integral).
-        y: Vector of predicted counts (real).
+        x: Matrix of training examples, one per row.
+        y: Vector of labels in {0, 1}.
+        theta: Vector of parameters for logistic regression model.
         save_path: Path to save the plot.
         correction: Correction factor to apply, if any.
     """
     # Plot dataset
     plt.figure()
-    plt.plot(t, p, 'go', linewidth=2)
+    plt.plot(x[y == 1, -2], x[y == 1, -1], 'bx', linewidth=2)
+    plt.plot(x[y == 0, -2], x[y == 0, -1], 'go', linewidth=2)
 
-    # Plot y=x line (for visualizing correctness)
-    l = np.arange(np.max([np.min(t), np.min(p)]), np.min([np.max(t), np.max(p)]), 0.01)
-    plt.plot(l, l, c='red', linewidth=2)
-    plt.xlim(np.min(t)-.1, np.max(t)+.1)
-    plt.ylim(np.min(p)-.1, np.max(p)+.1)
+    # Plot decision boundary (found by solving for theta^T x = 0)
+    x1 = np.arange(min(x[:, -2]), max(x[:, -2]), 0.01)
+    x2 = -(theta[0] / theta[2] + theta[1] / theta[2] * x1
+           + np.log((2 - correction) / correction) / theta[2])
+    plt.plot(x1, x2, c='red', linewidth=2)
+    plt.xlim(x[:, -2].min()-.1, x[:, -2].max()+.1)
+    plt.ylim(x[:, -1].min()-.1, x[:, -1].max()+.1)
 
     # Add labels and save to disk
-    plt.xlabel('true counts')
-    plt.ylabel('predicted counts')
+    plt.xlabel('x1')
+    plt.ylabel('x2')
     plt.savefig(save_path)
