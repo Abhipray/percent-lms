@@ -7,18 +7,18 @@ import multiprocessing
 
 def main():
     # Number of trials to run in experiment
-    rates = [0.005, 0.01, 0.05, 0.1, 0.5, 1]
-    x = np.zeros((6,3))
-    y = np.zeros((6,3))
-    z = np.zeros((6,3))
+    rates = [0.05, 0.01, 0.05, 0.1, 0.5, 1]
+    x = np.zeros((len(rates),3))
+    y = np.zeros((len(rates),3))
+    z = np.zeros((len(rates),3))
 
     # Run each trial on a different processor
     with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
-        for n,it,ac in pool.imap_unordered(run_trial_plms, range(6)):
+        for n,it,ac in pool.imap_unordered(run_trial_plms, range(len(rates))):
             x[n,:] = [rates[n],it,ac]
-        for n,it,ac in pool.imap_unordered(run_trial_lms, range(6)):
+        for n,it,ac in pool.imap_unordered(run_trial_lms, range(len(rates))):
             y[n,:] = [rates[n],it,ac]
-        for n,it,ac in pool.imap_unordered(run_trial_newton, range(6)):
+        for n,it,ac in pool.imap_unordered(run_trial_newton, range(len(rates))):
             z[n,:] = [rates[n],it,ac]
 
     util.plot(x,y,z,'Classification')
@@ -31,7 +31,7 @@ def run_trial_plms(n):
             valid_path: Path to CSV file containing dataset for validation.
             save_path: Path to save predicted probabilities using np.savetxt().
         """
-    rates = [0.005, 0.01, 0.05, 0.1, 0.5, 1]
+    rates = [0.05, 0.01, 0.05, 0.1, 0.5, 1]
     train_path = 'ds1_train.csv'
     valid_path = 'ds1_valid.csv'
 
@@ -46,7 +46,6 @@ def run_trial_plms(n):
     # Plot decision boundary on top of validation set set
     x_valid, y_valid = util.load_dataset(valid_path, add_intercept=True)
     ac = LR.predict(x_valid, y_valid)
-    print('Completed %LMS with LR:', rates[n])
     return n,it,ac
     # *** END CODE HERE ***
 
@@ -58,7 +57,7 @@ def run_trial_lms(n):
             valid_path: Path to CSV file containing dataset for validation.
             save_path: Path to save predicted probabilities using np.savetxt().
         """
-    rates = [0.005, 0.01, 0.05, 0.1, 0.5, 1]
+    rates = [0.05,0.01, 0.05, 0.1,0.5,1]
 
     train_path = 'ds1_train.csv'
     valid_path = 'ds1_valid.csv'
@@ -74,7 +73,6 @@ def run_trial_lms(n):
     # Plot decision boundary on top of validation set set
     x_valid, y_valid = util.load_dataset(valid_path, add_intercept=True)
     ac = LR.predict(x_valid, y_valid)
-    print('Completed LMS with LR:', rates[n])
     return n,it,ac
     # *** END CODE HERE ***
 
@@ -86,7 +84,7 @@ def run_trial_newton(n):
             valid_path: Path to CSV file containing dataset for validation.
             save_path: Path to save predicted probabilities using np.savetxt().
         """
-    rates = [0.005, 0.01, 0.05, 0.1, 0.5, 1]
+    rates = [0.05,0.01, 0.05, 0.1,0.5,1]
     train_path = 'ds1_train.csv'
     valid_path = 'ds1_valid.csv'
 
@@ -101,7 +99,6 @@ def run_trial_newton(n):
     # Plot decision boundary on top of validation set set
     x_valid, y_valid = util.load_dataset(valid_path, add_intercept=True)
     ac = LR.predict(x_valid, y_valid)
-    print('Completed Newton with LR:', rates[n])
     return n,it,ac
     # *** END CODE HERE ***
 
@@ -113,7 +110,7 @@ class LogisticRegression:
         > clf.fit(x_train, y_train)
         > clf.predict(x_eval)
     """
-    def __init__(self, step_size=0.01, max_iter=10000, eps=1e-5,
+    def __init__(self, step_size=0.01, max_iter=20000, eps=1e-5,
                  theta_0=None, verbose=True):
         """
         Args:
@@ -154,8 +151,8 @@ class LogisticRegression:
             old_theta = self.theta
             grad=logisticGradient(old_theta, x, y)
             delta = self.step_size * grad
-            var = abs(np.linalg.norm(delta, axis=0)) / delta.shape[0]
-            noise = np.where(abs(old_theta) < var, np.random.normal(0, var, delta.shape), np.zeros_like(delta))
+            var = np.abs(np.linalg.norm(delta, axis=0)) / np.abs(delta.size)
+            noise = np.where(np.abs(old_theta) < np.abs(var), np.random.normal(0, np.abs(var), delta.shape), np.zeros_like(delta))
             update = (delta * np.sign(old_theta)) * old_theta + noise
             self.theta = old_theta - update
             t+=1
@@ -187,8 +184,7 @@ class LogisticRegression:
             old_theta = self.theta
             grad=logisticGradient(old_theta, x, y)
             delta = self.step_size * grad
-            update = delta * old_theta
-            self.theta = old_theta - update
+            self.theta = old_theta - delta
             t+=1
         return t
         # *** END CODE HERE ***
@@ -251,7 +247,7 @@ class LogisticRegression:
             elif np.dot(np.transpose(self.theta),new_x_k)<0:
                 if y[k]==1.0:
                     FN+=1
-        return (FP+FN)/len(y)
+        return 1-(FP+FN)/len(y)
         # *** END CODE HERE ***
 
 if __name__ == '__main__':
